@@ -16,7 +16,8 @@ const fs             = require('fs');
 const app        = express();
 const PORT       = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'nexabank_super_secret_jwt_key_2024';
-const DB_PATH    = path.join(__dirname, 'nexabank.db');
+// const DB_PATH    = path.join(__dirname, 'nexabank.db');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'nexabank.db');
 
 app.use(cors());
 app.use(express.json());
