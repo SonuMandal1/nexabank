@@ -140,12 +140,7 @@ Visit: [http://localhost:5000](http://localhost:5000)
 
 ---
 
-## 🔑 Demo Credentials
 
-| Role | Email | Password |
-|---|---|---|
-| **Admin** | admin@nexabank.com | admin123 |
-| **User** | Register a new account | — |
 
 > New users receive a **$1,000 welcome bonus** on registration!
 
