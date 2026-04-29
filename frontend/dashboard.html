@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NexaBank — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --gold:#c9a84c;--gold-light:#e8c97a;--gold-dark:#9a7a2e;
+  --black:#0a0a0f;--dark:#111118;--dark2:#1a1a24;--dark3:#22222f;--dark4:#2a2a3a;
+  --border:rgba(201,168,76,0.18);--border2:rgba(255,255,255,0.06);
+  --text:#e8e4d9;--muted:#7a7a8a;--muted2:#5a5a6a;
+  --red:#e05555;--green:#4caf7d;--blue:#4f9cf9;--purple:#9f7aea;--orange:#f6a623;
+  --sidebar:240px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--dark);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);background:var(--dark);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  transition:all 0.3s;overflow:hidden;
+}
+.sidebar-logo{padding:1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.8rem;}
+.logo-icon{width:36px;height:36px;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.logo-text{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--gold);letter-spacing:0.08em;}
+.logo-sub{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);}
+
+.nav{flex:1;padding:1rem 0;overflow-y:auto;}
+.nav-section{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted2);padding:0.8rem 1.2rem 0.4rem;}
+.nav-item{
+  display:flex;align-items:center;gap:0.8rem;padding:0.7rem 1.2rem;
+  cursor:pointer;color:var(--muted);transition:all 0.2s;position:relative;font-size:0.85rem;
+}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.nav-item.active{color:var(--gold);background:rgba(201,168,76,0.07);}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);}
+.nav-icon{font-size:1rem;width:1.2rem;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:0.65rem;padding:0.15rem 0.45rem;border-radius:10px;font-weight:600;}
+
+.sidebar-user{padding:1rem 1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:0.7rem;}
+.user-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:#000;flex-shrink:0;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:0.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-role{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+.logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0.2rem;transition:color 0.2s;}
+.logout-btn:hover{color:var(--red);}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{
+  height:56px;min-height:56px;background:var(--dark);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;
+}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:1rem;}
+.notif-btn{
+  position:relative;background:none;border:1px solid var(--border);color:var(--muted);
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:1rem;transition:all 0.2s;
+}
+.notif-btn:hover{border-color:var(--gold);color:var(--gold);}
+.notif-dot{position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:var(--red);border-radius:50%;border:2px solid var(--dark);}
+.time-display{font-size:0.75rem;color:var(--muted);letter-spacing:0.05em;}
+
+.content{flex:1;overflow-y:auto;padding:1.5rem;}
+
+/* ── SECTIONS ── */
+.section{display:none;}
+.section.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ── */
+.grid{display:grid;gap:1rem;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+
+.stat-card{
+  background:var(--dark2);border:1px solid var(--border2);padding:1.2rem;
+  position:relative;overflow:hidden;transition:all 0.3s;
+}
+.stat-card:hover{border-color:var(--border);transform:translateY(-1px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.3s;}
+.stat-card:hover::before{opacity:1;}
+.stat-label{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem;}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;margin-bottom:0.3rem;}
+.stat-change{font-size:0.75rem;color:var(--muted);}
+.stat-change.up{color:var(--green);}
+.stat-change.down{color:var(--red);}
+.stat-icon{position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:2rem;opacity:0.08;}
+
+.card{background:var(--dark2);border:1px solid var(--border2);padding:1.2rem;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.card-title{font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
+
+/* ── BANK ACCOUNT CARDS ── */
+.account-card{
+  background:linear-gradient(135deg,var(--dark3),var(--dark2));
+  border:1px solid var(--border);padding:1.4rem;cursor:pointer;
+  transition:all 0.3s;position:relative;overflow:hidden;
+}
+.account-card:hover{border-color:var(--gold);transform:translateY(-2px);}
+.account-card.selected{border-color:var(--gold);background:rgba(201,168,76,0.06);}
+.account-card::before{content:'⬡';position:absolute;right:-1rem;bottom:-1rem;font-size:5rem;opacity:0.04;color:var(--gold);}
+.acc-type{font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.8rem;}
+.acc-number{font-size:0.82rem;color:var(--muted);letter-spacing:0.1em;margin-bottom:1rem;}
+.acc-balance{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;}
+.acc-currency{font-size:0.8rem;color:var(--muted);margin-top:0.2rem;}
+.acc-status{display:inline-block;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;padding:0.2rem 0.6rem;border-radius:2px;margin-top:0.5rem;}
+.status-active{background:rgba(76,175,125,0.15);color:var(--green);border:1px solid rgba(76,175,125,0.3);}
+.status-suspended{background:rgba(224,85,85,0.15);color:var(--red);border:1px solid rgba(224,85,85,0.3);}
+
+/* ── CREDIT CARD ── */
+.credit-card{
+  background:linear-gradient(135deg,#1a1a24 0%,#22222f 50%,#1a1a24 100%);
+  border:1px solid var(--border);padding:1.5rem;position:relative;overflow:hidden;
+  aspect-ratio:1.586/1;display:flex;flex-direction:column;justify-content:space-between;
+}
+.credit-card::before{
+  content:'';position:absolute;top:-30%;right:-10%;width:60%;height:120%;
+  background:radial-gradient(circle,rgba(201,168,76,0.12) 0%,transparent 70%);
+}
+.card-chip{width:36px;height:28px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:4px;position:relative;}
+.card-chip::before{content:'';position:absolute;inset:4px;border:1px solid rgba(0,0,0,0.3);border-radius:2px;}
+.card-num{font-size:1rem;letter-spacing:0.2em;color:var(--text);margin:0.8rem 0 0.5rem;font-family:monospace;}
+.card-bottom{display:flex;justify-content:space-between;align-items:flex-end;}
+.card-holder-name{font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;}
+.card-expiry-label{font-size:0.6rem;color:var(--muted);text-transform:uppercase;margin-bottom:0.2rem;}
+.card-expiry{font-size:0.85rem;}
+.card-type-badge{position:absolute;top:1.2rem;right:1.2rem;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);background:rgba(201,168,76,0.1);padding:0.2rem 0.6rem;border:1px solid rgba(201,168,76,0.3);}
+.card-status-badge{position:absolute;bottom:1.2rem;right:1.2rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;}
+
+/* ── TRANSACTIONS ── */
+.tx-list{display:flex;flex-direction:column;gap:0.5rem;}
+.tx-item{
+  display:flex;align-items:center;gap:0.8rem;padding:0.8rem 1rem;
+  background:var(--dark3);border:1px solid transparent;transition:all 0.2s;
+}
+.tx-item:hover{border-color:var(--border);background:var(--dark4);}
+.tx-icon{
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;
+}
+.tx-icon.deposit{background:rgba(76,175,125,0.12);color:var(--green);}
+.tx-icon.withdraw{background:rgba(224,85,85,0.12);color:var(--red);}
+.tx-icon.transfer{background:rgba(79,156,249,0.12);color:var(--blue);}
+.tx-icon.loan_payment{background:rgba(159,122,234,0.12);color:var(--purple);}
+.tx-icon.loan_disbursement{background:rgba(246,166,35,0.12);color:var(--orange);}
+.tx-info{flex:1;min-width:0;}
+.tx-desc{font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tx-date{font-size:0.72rem;color:var(--muted);margin-top:0.15rem;}
+.tx-amount{font-size:0.9rem;font-weight:600;text-align:right;flex-shrink:0;}
+.tx-amount.credit{color:var(--green);}
+.tx-amount.debit{color:var(--red);}
+
+/* ── FORMS ── */
+.form-section{display:grid;gap:1rem;}
+.form-group{display:flex;flex-direction:column;gap:0.4rem;}
+.form-group label{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
+.form-group input,.form-group select,.form-group textarea{
+  background:var(--dark3);border:1px solid var(--border);color:var(--text);
+  padding:0.7rem 0.9rem;font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:all 0.2s;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold);}
+.form-group select option{background:var(--dark3);}
+.btn{
+  padding:0.7rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:0.8rem;
+  font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
+  transition:all 0.2s;border:none;
+}
+.btn-gold{background:var(--gold);color:var(--black);}
+.btn-gold:hover{background:var(--gold-light);}
+.btn-gold:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+.btn-red{background:rgba(224,85,85,0.15);border:1px solid rgba(224,85,85,0.3);color:var(--red);}
+.btn-red:hover{background:rgba(224,85,85,0.25);}
+.btn-green{background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.3);color:var(--green);}
+.btn-green:hover{background:rgba(76,175,125,0.25);}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:2rem;right:2rem;z-index:9999;
+  padding:0.9rem 1.5rem;font-size:0.85rem;display:none;
+  animation:slideIn 0.3s ease;border-left:3px solid var(--gold);
+  background:var(--dark2);color:var(--text);max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.5);
+}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-success{border-color:var(--green)!important;}
+.toast-error{border-color:var(--red)!important;}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--dark2);border:1px solid var(--border);padding:2rem;
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  animation:fadeIn 0.3s ease;
+}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;}
+.modal-close:hover{color:var(--red);}
+
+/* ── TABLES ── */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{
+  text-align:left;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--muted);padding:0.6rem 0.8rem;border-bottom:1px solid var(--border);background:var(--dark3);
+}
+.data-table td{padding:0.7rem 0.8rem;border-bottom:1px solid var(--border2);font-size:0.83rem;vertical-align:middle;}
+.data-table tr:hover td{background:rgba(255,255,255,0.02);}
+.badge{display:inline-block;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.5rem;border-radius:2px;}
+.badge-green{background:rgba(76,175,125,0.15);color:var(--green);}
+.badge-red{background:rgba(224,85,85,0.15);color:var(--red);}
+.badge-orange{background:rgba(246,166,35,0.15);color:var(--orange);}
+.badge-blue{background:rgba(79,156,249,0.15);color:var(--blue);}
+.badge-purple{background:rgba(159,122,234,0.15);color:var(--purple);}
+
+/* ── NOTIFICATION LIST ── */
+.notif-item{
+  padding:0.9rem 1rem;border-bottom:1px solid var(--border2);
+  display:flex;gap:0.8rem;cursor:pointer;transition:background 0.2s;
+}
+.notif-item:hover{background:var(--dark3);}
+.notif-item.unread{border-left:2px solid var(--gold);}
+.notif-dot-type{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.notif-content{flex:1;}
+.notif-title{font-size:0.85rem;margin-bottom:0.2rem;}
+.notif-msg{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+.notif-time{font-size:0.7rem;color:var(--muted2);margin-top:0.3rem;}
+
+/* ── LOAN CARD ── */
+.loan-card{background:var(--dark3);border:1px solid var(--border2);padding:1.2rem;transition:all 0.3s;}
+.loan-card:hover{border-color:var(--border);}
+.loan-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.8rem;}
+.loan-type{font-size:0.82rem;font-weight:600;text-transform:capitalize;}
+.progress-bar{height:4px;background:var(--dark4);border-radius:2px;overflow:hidden;margin:0.5rem 0;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));border-radius:2px;transition:width 0.5s;}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;height:200px;}
+
+/* ── RESPONSIVE HELPERS ── */
+.flex{display:flex;}
+.flex-col{flex-direction:column;}
+.gap-1{gap:0.5rem;}
+.gap-2{gap:1rem;}
+.gap-3{gap:1.5rem;}
+.mt-1{margin-top:0.5rem;}
+.mt-2{margin-top:1rem;}
+.text-gold{color:var(--gold);}
+.text-muted{color:var(--muted);}
+.text-green{color:var(--green);}
+.text-red{color:var(--red);}
+.text-sm{font-size:0.8rem;}
+.text-xs{font-size:0.72rem;}
+.serif{font-family:'Cormorant Garamond',serif;}
+.bold{font-weight:600;}
+.w-full{width:100%;}
+.table-wrap{overflow-x:auto;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⬡</div>
+      <div><div class="logo-text">NEXABANK</div><div class="logo-sub">Dashboard</div></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showSection('overview')"><span class="nav-icon">📊</span>Overview</div>
+      <div class="nav-item" onclick="showSection('accounts')"><span class="nav-icon">🏦</span>Accounts</div>
+      <div class="nav-item" onclick="showSection('transactions')"><span class="nav-icon">↔️</span>Transactions</div>
+      <div class="nav-section">Banking</div>
+      <div class="nav-item" onclick="showSection('transfer')"><span class="nav-icon">💸</span>Transfer</div>
+      <div class="nav-item" onclick="showSection('deposit')"><span class="nav-icon">💰</span>Deposit/Withdraw</div>
+      <div class="nav-item" onclick="showSection('cards')"><span class="nav-icon">💳</span>Cards</div>
+      <div class="nav-item" onclick="showSection('loans')"><span class="nav-icon">📋</span>Loans</div>
+      <div class="nav-item" onclick="showSection('beneficiaries')"><span class="nav-icon">👥</span>Beneficiaries</div>
+      <div class="nav-section">Account</div>
+      <div class="nav-item" onclick="showSection('notifications')" id="navNotif"><span class="nav-icon">🔔</span>Notifications<span class="nav-badge" id="notifBadge" style="display:none">0</span></div>
+      <div class="nav-item" onclick="showSection('profile')"><span class="nav-icon">👤</span>Profile</div>
+      <div class="nav-item admin-only" onclick="showSection('admin')" style="display:none"><span class="nav-icon">⚙️</span>Admin Panel</div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebarAvatar">U</div>
+      <div class="user-info"><div class="user-name" id="sidebarName">User</div><div class="user-role" id="sidebarRole">Member</div></div>
+      <button class="logout-btn" onclick="logout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Overview</div>
+      <div class="topbar-right">
+        <div class="time-display" id="timeDisplay"></div>
+        <button class="notif-btn" onclick="showSection('notifications')">🔔<span class="notif-dot" id="notifDot" style="display:none"></span></button>
+      </div>
+    </div>
+    <div class="content" id="content">
+
+      <!-- ══ OVERVIEW ══ -->
+      <div class="section active" id="section-overview">
+        <div class="grid grid-4 gap-2" id="statsGrid" style="margin-bottom:1rem;"></div>
+        <div class="grid grid-2 gap-2" style="margin-bottom:1rem;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Spending Analytics</div><div style="font-size:0.75rem;color:var(--muted)">Last 6 months</div></div>
+            <div class="chart-wrap"><canvas id="overviewChart"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Recent Transactions</div><a onclick="showSection('transactions')" style="font-size:0.75rem;color:var(--gold);cursor:pointer">View All →</a></div>
+            <div id="recentTx" class="tx-list"></div>
+          </div>
+        </div>
+        <div class="grid grid-3 gap-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">My Accounts</div><button class="btn btn-outline" style="padding:0.3rem 0.8rem;font-size:0.72rem" onclick="showSection('accounts')">Manage</button></div>
+            <div id="overviewAccounts"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Active Loans</div></div>
+            <div id="overviewLoans"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Quick Actions</div></div>
+            <div class="flex flex-col gap-1">
+              <button class="btn btn-gold w-full" onclick="showSection('transfer')">💸 Send Money</button>
+              <button class="btn btn-outline w-full" onclick="showSection('deposit')">💰 Deposit Cash</button>
+              <button class="btn btn-outline w-full" onclick="openNewAccount()">🏦 Open Account</button>
+              <button class="btn btn-outline w-full" onclick="showSection('loans')">📋 Apply for Loan</button>
+              <button class="btn btn-outline w-full" onclick="showSection('cards')">💳 Issue Card</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ACCOUNTS ══ -->
+      <div class="section" id="section-accounts">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div class="text-sm text-muted">Manage your bank accounts</div>
+          <button class="btn btn-gold" onclick="openNewAccount()">+ Open Account</button>
+        </div>
+        <div class="grid grid-3 gap-2" id="accountsGrid"></div>
+        <div class="card mt-2"><div class="card-header"><div class="card-title">Account Statement</div></div><div id="accountStatement" class="tx-list"></div></div>
+      </div>
+
+      <!-- ══ TRANSACTIONS ══ -->
+      <div class="section" id="section-transactions">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">All Transactions</div>
+            <div style="display:flex;gap:0.5rem;">
+              <select id="txFilter" onchange="loadTransactions()" style="background:var(--dark3);border:1px solid var(--border);color:var(--text);padding:0.3rem 0.6rem;font-size:0.8rem;outline:none;">
+                <option value="">All Types</option>
+                <option value="deposit">Deposits</option>
+                <option value="withdraw">Withdrawals</option>
+                <option value="transfer">Transfers</option>
+                <option value="loan_payment">Loan Payments</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="data-table" id="txTable">
+            <thead><tr><th>Type</th><th>Description</th><th>Amount</th><th>Balance After</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody id="txTableBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ══ TRANSFER ══ -->
+      <div class="section" id="section-transfer">
+        <div class="grid grid-2 gap-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Send Money</div></div>
+            <div class="form-section">
+              <div class="form-group"><label>From Account</label><select id="transferFrom"></select></div>
+              <div class="form-group"><label>To Account Number</label><input type="text" id="transferTo" placeholder="Enter 12-digit account number"/></div>
+              <div class="form-group"><label>Amount (USD)</label><input type="number" id="transferAmount" placeholder="0.00" min="0.01" step="0.01"/></div>
+              <div class="form-group"><label>Description</label><input type="text" id="transferDesc" placeholder="e.g. Rent payment"/></div>
+              <button class="btn btn-gold w-full" onclick="handleTransfer()">Transfer →</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Saved Beneficiaries</div><button class="btn btn-outline" style="padding:0.3rem 0.8rem;font-size:0.72rem" onclick="showSection('beneficiaries')">Manage</button></div>
+            <div id="transferBeneficiaries"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ DEPOSIT/WITHDRAW ══ -->
+      <div class="section" id="section-deposit">
+        <div class="grid grid-2 gap-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">💰 Deposit Funds</div></div>
+            <div class="form-section">
+              <div class="form-group"><label>To Account</label><select id="depositAccount"></select></div>
+              <div class="form-group"><label>Amount</label><input type="number" id="depositAmount" placeholder="0.00" min="0.01"/></div>
+              <div class="form-group"><label>Description</label><input type="text" id="depositDesc" placeholder="e.g. Cash deposit"/></div>
+              <button class="btn btn-gold w-full" onclick="handleDeposit()">Deposit Funds</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏧 Withdraw Funds</div></div>
+            <div class="form-section">
+              <div class="form-group"><label>From Account</label><select id="withdrawAccount"></select></div>
+              <div class="form-group"><label>Amount</label><input type="number" id="withdrawAmount" placeholder="0.00" min="0.01"/></div>
+              <div class="form-group"><label>Description</label><input type="text" id="withdrawDesc" placeholder="e.g. Cash withdrawal"/></div>
+              <button class="btn btn-red w-full" onclick="handleWithdraw()">Withdraw Funds</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CARDS ══ -->
+      <div class="section" id="section-cards">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div class="text-sm text-muted">Manage your payment cards</div>
+          <button class="btn btn-gold" onclick="openNewCard()">+ Issue New Card</button>
+        </div>
+        <div class="grid grid-3 gap-2" id="cardsGrid"></div>
+      </div>
+
+      <!-- ══ LOANS ══ -->
+      <div class="section" id="section-loans">
+        <div class="grid grid-2 gap-2" style="margin-bottom:1rem;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Apply for Loan</div></div>
+            <div class="form-section">
+              <div class="form-group"><label>Loan Type</label>
+                <select id="loanType">
+                  <option value="personal">Personal Loan (12.5% p.a.)</option>
+                  <option value="home">Home Loan (7.5% p.a.)</option>
+                  <option value="auto">Auto Loan (9.0% p.a.)</option>
+                  <option value="education">Education Loan (6.5% p.a.)</option>
+                  <option value="business">Business Loan (11.0% p.a.)</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Loan Amount (USD)</label><input type="number" id="loanAmount" placeholder="10000" min="100"/></div>
+              <div class="form-group"><label>Duration (Months)</label><input type="number" id="loanDuration" placeholder="36" min="3" max="360"/></div>
+              <div id="loanCalcResult" style="display:none;background:rgba(201,168,76,0.05);border:1px solid var(--border);padding:0.8rem;"></div>
+              <div style="display:flex;gap:0.5rem;">
+                <button class="btn btn-outline" onclick="calcLoanEMI()">Calculate EMI</button>
+                <button class="btn btn-gold" style="flex:1" onclick="applyLoan()">Apply Now</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Loan Summary</div></div>
+            <div id="loanSummary"></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">My Loans</div></div><div id="loansGrid" class="flex flex-col gap-1"></div></div>
+      </div>
+
+      <!-- ══ BENEFICIARIES ══ -->
+      <div class="section" id="section-beneficiaries">
+        <div class="grid grid-2 gap-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Add Beneficiary</div></div>
+            <div class="form-section">
+              <div class="form-group"><label>Full Name</label><input type="text" id="benName" placeholder="Beneficiary name"/></div>
+              <div class="form-group"><label>Account Number</label><input type="text" id="benAccount" placeholder="NexaBank account number"/></div>
+              <div class="form-group"><label>Bank Name</label><input type="text" id="benBank" placeholder="NexaBank" value="NexaBank"/></div>
+              <button class="btn btn-gold w-full" onclick="addBeneficiary()">Add Beneficiary</button>
+            </div>
+          </div>
+          <div class="card"><div class="card-header"><div class="card-title">Saved Beneficiaries</div></div><div id="benList"></div></div>
+        </div>
+      </div>
+
+      <!-- ══ NOTIFICATIONS ══ -->
+      <div class="section" id="section-notifications">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Notifications</div>
+            <button class="btn btn-outline" style="padding:0.3rem 0.8rem;font-size:0.72rem" onclick="markAllRead()">Mark All Read</button>
+          </div>
+          <div id="notifList"></div>
+        </div>
+      </div>
+
+      <!-- ══ PROFILE ══ -->
+      <div class="section" id="section-profile">
+        <div class="grid grid-2 gap-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Personal Information</div></div>
+            <div class="form-section">
+              <div class="form-group"><label>Full Name</label><input type="text" id="profileName"/></div>
+              <div class="form-group"><label>Email (read-only)</label><input type="text" id="profileEmail" readonly style="opacity:0.5;cursor:not-allowed"/></div>
+              <div class="form-group"><label>Phone</label><input type="text" id="profilePhone"/></div>
+              <div class="form-group"><label>Address</label><input type="text" id="profileAddress"/></div>
+              <button class="btn btn-gold w-full" onclick="saveProfile()">Save Changes</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Change Password</div></div>
+            <div class="form-section">
+              <div class="form-group"><label>Current Password</label><input type="password" id="currentPwd"/></div>
+              <div class="form-group"><label>New Password</label><input type="password" id="newPwd"/></div>
+              <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPwd"/></div>
+              <button class="btn btn-gold w-full" onclick="changePassword()">Update Password</button>
+            </div>
+            <div style="margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--border2);">
+              <div class="card-title" style="margin-bottom:0.8rem;">Account Info</div>
+              <div id="profileInfo" class="flex flex-col gap-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ADMIN ══ -->
+      <div class="section" id="section-admin">
+        <div class="grid grid-4 gap-2" id="adminStatsGrid" style="margin-bottom:1rem;"></div>
+        <div class="grid grid-2 gap-2" style="margin-bottom:1rem;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">All Users</div></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead><tbody id="adminUsersBody"></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Pending Loan Applications</div></div>
+            <div id="adminLoansList"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Transactions (All Users)</div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>User</th><th>Type</th><th>Description</th><th>Amount</th><th>Date</th></tr></thead><tbody id="adminTxBody"></tbody></table></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- MODAL: New Account -->
+<div class="modal-overlay" id="newAccountModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Open New Account</div><button class="modal-close" onclick="closeModal('newAccountModal')">✕</button></div>
+    <div class="form-section">
+      <div class="form-group"><label>Account Type</label>
+        <select id="newAccType">
+          <option value="savings">Savings Account</option>
+          <option value="checking">Checking Account</option>
+          <option value="fixed_deposit">Fixed Deposit</option>
+        </select>
+      </div>
+      <button class="btn btn-gold w-full" onclick="createAccount()">Open Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: New Card -->
+<div class="modal-overlay" id="newCardModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Issue New Card</div><button class="modal-close" onclick="closeModal('newCardModal')">✕</button></div>
+    <div class="form-section">
+      <div class="form-group"><label>Link to Account</label><select id="cardAccount"></select></div>
+      <div class="form-group"><label>Card Type</label>
+        <select id="cardType">
+          <option value="debit">Debit Card</option>
+          <option value="credit">Credit Card ($5,000 limit)</option>
+          <option value="platinum">Platinum Card ($15,000 limit)</option>
+          <option value="virtual">Virtual Card</option>
+        </select>
+      </div>
+      <button class="btn btn-gold w-full" onclick="createCard()">Issue Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Loan Payment -->
+<div class="modal-overlay" id="loanPayModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Make Loan Payment</div><button class="modal-close" onclick="closeModal('loanPayModal')">✕</button></div>
+    <input type="hidden" id="payLoanId"/>
+    <div class="form-section">
+      <div class="form-group"><label>From Account</label><select id="payFromAccount"></select></div>
+      <div class="form-group"><label>Amount</label><input type="number" id="payLoanAmount" placeholder="0.00" min="0.01"/></div>
+      <div id="loanPayInfo" style="font-size:0.82rem;color:var(--muted);padding:0.6rem;background:var(--dark3);"></div>
+      <button class="btn btn-gold w-full" onclick="submitLoanPayment()">Make Payment</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API='http://localhost:5000/api';
+let token=localStorage.getItem('nexabank_token');
+let currentUser=JSON.parse(localStorage.getItem('nexabank_user')||'{}');
+let accounts=[];
+let overviewChart=null;
+
+if(!token){window.location.href='index.html';}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+async function init(){
+  const user=await apiFetch('/users/me');
+  if(!user){return logout();}
+  currentUser={...currentUser,...user};
+  localStorage.setItem('nexabank_user',JSON.stringify(currentUser));
+
+  const av=document.getElementById('sidebarAvatar');
+  av.textContent=currentUser.name[0].toUpperCase();
+  av.style.background=currentUser.avatar_color||'#c9a84c';
+  document.getElementById('sidebarName').textContent=currentUser.name;
+  document.getElementById('sidebarRole').textContent=currentUser.role==='admin'?'Administrator':'Member';
+
+  if(currentUser.role==='admin'){
+    document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
+  }
+
+  accounts=await apiFetch('/accounts')||[];
+  loadOverview();
+  pollNotifications();
+  updateClock();
+  setInterval(updateClock,1000);
+  setInterval(pollNotifications,30000);
+}
+
+function updateClock(){
+  const now=new Date();
+  document.getElementById('timeDisplay').textContent=now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function apiFetch(endpoint,method='GET',body=null){
+  try{
+    const opts={method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}};
+    if(body)opts.body=JSON.stringify(body);
+    const r=await fetch(API+endpoint,opts);
+    if(r.status===401||r.status===403){logout();return null;}
+    return await r.json();
+  }catch(e){showToast('Server connection error','error');return null;}
+}
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='';
+  if(type==='error')t.classList.add('toast-error');
+  else if(type==='success')t.classList.add('toast-success');
+  t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.display='none',4000);
+}
+
+function logout(){localStorage.removeItem('nexabank_token');localStorage.removeItem('nexabank_user');window.location.href='index.html';}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function showSection(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.trim().toLowerCase().includes(name.toLowerCase().replace('-',' '))||n.getAttribute('onclick')?.includes(name))n.classList.add('active');});
+  const titles={overview:'Overview',accounts:'Accounts',transactions:'Transactions',transfer:'Fund Transfer',deposit:'Deposit & Withdraw',cards:'Payment Cards',loans:'Loans',beneficiaries:'Beneficiaries',notifications:'Notifications',profile:'My Profile',admin:'Admin Panel'};
+  document.getElementById('pageTitle').textContent=titles[name]||name;
+  if(name==='overview')loadOverview();
+  else if(name==='accounts')loadAccounts();
+  else if(name==='transactions')loadTransactions();
+  else if(name==='transfer'){populateAccountSelects();loadBeneficiariesList('transferBeneficiaries');}
+  else if(name==='deposit'){populateAccountSelects();}
+  else if(name==='cards')loadCards();
+  else if(name==='loans')loadLoans();
+  else if(name==='beneficiaries')loadBeneficiaries();
+  else if(name==='notifications')loadNotifications();
+  else if(name==='profile')loadProfile();
+  else if(name==='admin')loadAdmin();
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────
+async function loadOverview(){
+  const totalBalance=accounts.reduce((s,a)=>s+a.balance,0);
+  const activeAccounts=accounts.filter(a=>a.status==='active').length;
+  const loans=await apiFetch('/loans')||[];
+  const activeLoans=loans.filter(l=>l.status==='active');
+  const totalLoan=activeLoans.reduce((s,l)=>s+l.remaining_balance,0);
+  const cards=await apiFetch('/cards')||[];
+
+  const stats=[
+    {label:'Total Balance',value:'$'+totalBalance.toLocaleString('en',{minimumFractionDigits:2}),change:`${activeAccounts} active accounts`,icon:'💰',changeClass:'up'},
+    {label:'Active Accounts',value:activeAccounts.toString(),change:'of '+accounts.length+' total',icon:'🏦',changeClass:''},
+    {label:'Loan Balance',value:'$'+totalLoan.toLocaleString('en',{minimumFractionDigits:2}),change:activeLoans.length+' active loans',icon:'📋',changeClass:totalLoan>0?'down':''},
+    {label:'Payment Cards',value:cards.length.toString(),change:cards.filter(c=>c.status==='active').length+' active cards',icon:'💳',changeClass:''}
+  ];
+
+  document.getElementById('statsGrid').innerHTML=stats.map(s=>`
+    <div class="stat-card">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value serif">${s.value}</div>
+      <div class="stat-change ${s.changeClass}">${s.change}</div>
+      <div class="stat-icon">${s.icon}</div>
+    </div>`).join('');
+
+  const txs=await apiFetch('/transactions?limit=5')||[];
+  document.getElementById('recentTx').innerHTML=txs.length?txs.map(renderTxItem).join(''):'<div class="text-muted text-sm" style="padding:1rem;text-align:center;">No transactions yet</div>';
+
+  document.getElementById('overviewAccounts').innerHTML=accounts.slice(0,3).map(a=>`
+    <div style="padding:0.7rem 0;border-bottom:1px solid var(--border2);cursor:pointer" onclick="showSection('accounts')">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:0.78rem;color:var(--gold);text-transform:capitalize;">${a.account_type.replace('_',' ')}</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:0.1rem;">···${a.account_number.slice(-4)}</div>
+        </div>
+        <div class="serif bold" style="font-size:1.1rem;">$${a.balance.toLocaleString('en',{minimumFractionDigits:2})}</div>
+      </div>
+    </div>`).join('')||'<div class="text-muted text-sm" style="padding:0.5rem">No accounts</div>';
+
+  document.getElementById('overviewLoans').innerHTML=activeLoans.slice(0,3).map(l=>{
+    const pct=Math.round(((l.amount-l.remaining_balance)/l.amount)*100);
+    return`<div style="margin-bottom:0.8rem">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:0.3rem">
+        <span style="text-transform:capitalize;color:var(--text)">${l.loan_type} Loan</span>
+        <span class="text-red">$${l.remaining_balance.toLocaleString('en',{minimumFractionDigits:2})}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:0.7rem;color:var(--muted)">${pct}% repaid</div>
+    </div>`;
+  }).join('')||'<div class="text-muted text-sm" style="padding:0.5rem">No active loans</div>';
+
+  loadChart();
+}
+
+async function loadChart(){
+  const data=await apiFetch('/transactions/summary')||[];
+  const ctx=document.getElementById('overviewChart').getContext('2d');
+  if(overviewChart)overviewChart.destroy();
+  overviewChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:data.map(d=>d.month),
+      datasets:[
+        {label:'Income',data:data.map(d=>d.income),backgroundColor:'rgba(76,175,125,0.6)',borderColor:'rgba(76,175,125,1)',borderWidth:1,borderRadius:3},
+        {label:'Expenses',data:data.map(d=>d.expense),backgroundColor:'rgba(224,85,85,0.5)',borderColor:'rgba(224,85,85,1)',borderWidth:1,borderRadius:3}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7a7a8a',font:{size:11}}}},
+      scales:{x:{ticks:{color:'#7a7a8a',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7a7a8a',font:{size:11},callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(255,255,255,0.04)'}}}
+    }
+  });
+}
+
+// ── ACCOUNTS ─────────────────────────────────────────────────────────
+async function loadAccounts(){
+  accounts=await apiFetch('/accounts')||[];
+  document.getElementById('accountsGrid').innerHTML=accounts.map(a=>`
+    <div class="account-card" onclick="loadAccountStatement('${a.id}')">
+      <div class="acc-type">${a.account_type.replace('_',' ')}</div>
+      <div class="acc-number">Account No. ${a.account_number}</div>
+      <div class="acc-balance serif">$${a.balance.toLocaleString('en',{minimumFractionDigits:2})}</div>
+      <div class="acc-currency">United States Dollar</div>
+      <div><span class="acc-status ${a.status==='active'?'status-active':'status-suspended'}">${a.status}</span></div>
+    </div>`).join('')+'<div style="display:flex;align-items:center;justify-content:center;border:2px dashed rgba(201,168,76,0.2);min-height:160px;cursor:pointer;transition:all 0.3s" onclick="openNewAccount()" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.5)\'" onmouseout="this.style.borderColor=\'rgba(201,168,76,0.2)\'"><div style="text-align:center;color:var(--muted)"><div style="font-size:2rem">+</div><div style="font-size:0.8rem;margin-top:0.4rem">Open New Account</div></div></div>';
+}
+
+async function loadAccountStatement(accountId){
+  const txs=await apiFetch(`/transactions?account_id=${accountId}&limit=20`)||[];
+  document.getElementById('accountStatement').innerHTML=txs.length?txs.map(renderTxItem).join(''):'<div class="text-muted text-sm" style="padding:1rem;text-align:center">No transactions for this account.</div>';
+}
+
+function openNewAccount(){populateAccountSelects();openModal('newAccountModal');}
+
+async function createAccount(){
+  const type=document.getElementById('newAccType').value;
+  const r=await apiFetch('/accounts','POST',{account_type:type});
+  if(r&&!r.error){showToast(`${type.replace('_',' ')} account opened! (${r.accountNumber})`,'success');closeModal('newAccountModal');accounts=await apiFetch('/accounts')||[];loadAccounts();}
+  else showToast(r?.error||'Error creating account','error');
+}
+
+// ── TRANSACTIONS ─────────────────────────────────────────────────────
+async function loadTransactions(){
+  const type=document.getElementById('txFilter')?.value||'';
+  const txs=await apiFetch(`/transactions?limit=100${type?'&type='+type:''}`)||[];
+  const tbody=document.getElementById('txTableBody');
+  const icons={deposit:'💰',withdraw:'🏧',transfer:'↔️',loan_payment:'📋',loan_disbursement:'🏦'};
+  tbody.innerHTML=txs.map(t=>{
+    const isCredit=['deposit','loan_disbursement'].includes(t.type);
+    return`<tr>
+      <td><span class="badge ${isCredit?'badge-green':'badge-red'}">${icons[t.type]||'💱'} ${t.type.replace('_',' ')}</span></td>
+      <td>${t.description||'-'}</td>
+      <td class="${isCredit?'text-green':'text-red'} bold">${isCredit?'+':'-'}$${t.amount.toLocaleString('en',{minimumFractionDigits:2})}</td>
+      <td class="text-muted">${t.balance_after!=null?'$'+t.balance_after.toLocaleString('en',{minimumFractionDigits:2}):'-'}</td>
+      <td class="text-muted">${new Date(t.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
+      <td><span class="badge badge-green">Completed</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No transactions found</td></tr>';
+}
+
+function renderTxItem(t){
+  const isCredit=['deposit','loan_disbursement'].includes(t.type);
+  const icons={deposit:'💰',withdraw:'🏧',transfer:'↔️',loan_payment:'📋',loan_disbursement:'🏦'};
+  return`<div class="tx-item">
+    <div class="tx-icon ${t.type}">${icons[t.type]||'💱'}</div>
+    <div class="tx-info"><div class="tx-desc">${t.description||t.type.replace('_',' ')}</div><div class="tx-date">${new Date(t.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
+    <div class="tx-amount ${isCredit?'credit':'debit'}">${isCredit?'+':'-'}$${t.amount.toLocaleString('en',{minimumFractionDigits:2})}</div>
+  </div>`;
+}
+
+// ── TRANSFER ─────────────────────────────────────────────────────────
+async function handleTransfer(){
+  const from=document.getElementById('transferFrom').value;
+  const to=document.getElementById('transferTo').value.trim();
+  const amt=document.getElementById('transferAmount').value;
+  const desc=document.getElementById('transferDesc').value;
+  if(!from||!to||!amt)return showToast('Please fill all required fields','error');
+  const r=await apiFetch('/transactions/transfer','POST',{from_account_id:from,to_account_number:to,amount:parseFloat(amt),description:desc});
+  if(r&&!r.error){showToast(`$${parseFloat(amt).toLocaleString()} sent to ${to}`,'success');accounts=await apiFetch('/accounts')||[];document.getElementById('transferAmount').value='';document.getElementById('transferTo').value='';}
+  else showToast(r?.error||'Transfer failed','error');
+}
+
+// ── DEPOSIT/WITHDRAW ──────────────────────────────────────────────────
+async function handleDeposit(){
+  const acc=document.getElementById('depositAccount').value;
+  const amt=document.getElementById('depositAmount').value;
+  const desc=document.getElementById('depositDesc').value;
+  if(!acc||!amt)return showToast('Please select account and enter amount','error');
+  const r=await apiFetch('/transactions/deposit','POST',{account_id:acc,amount:parseFloat(amt),description:desc});
+  if(r&&!r.error){showToast(`$${parseFloat(amt).toLocaleString()} deposited!`,'success');accounts=await apiFetch('/accounts')||[];populateAccountSelects();document.getElementById('depositAmount').value='';}
+  else showToast(r?.error||'Deposit failed','error');
+}
+
+async function handleWithdraw(){
+  const acc=document.getElementById('withdrawAccount').value;
+  const amt=document.getElementById('withdrawAmount').value;
+  const desc=document.getElementById('withdrawDesc').value;
+  if(!acc||!amt)return showToast('Please select account and enter amount','error');
+  const r=await apiFetch('/transactions/withdraw','POST',{account_id:acc,amount:parseFloat(amt),description:desc});
+  if(r&&!r.error){showToast(`$${parseFloat(amt).toLocaleString()} withdrawn!`,'success');accounts=await apiFetch('/accounts')||[];populateAccountSelects();document.getElementById('withdrawAmount').value='';}
+  else showToast(r?.error||'Withdrawal failed','error');
+}
+
+function populateAccountSelects(){
+  const selects=['transferFrom','depositAccount','withdrawAccount','payFromAccount','cardAccount'];
+  selects.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=accounts.filter(a=>a.status==='active').map(a=>`<option value="${a.id}">${a.account_type.replace('_',' ')} ···${a.account_number.slice(-4)} ($${a.balance.toFixed(2)})</option>`).join('');
+  });
+}
+
+// ── CARDS ─────────────────────────────────────────────────────────────
+async function loadCards(){
+  const cards=await apiFetch('/cards')||[];
+  const colors={debit:'linear-gradient(135deg,#1a1a2e,#16213e)',credit:'linear-gradient(135deg,#2d1b69,#11998e)',platinum:'linear-gradient(135deg,#0f0c29,#302b63)',virtual:'linear-gradient(135deg,#1a1a1a,#2d2d2d)'};
+  document.getElementById('cardsGrid').innerHTML=cards.map(c=>`
+    <div class="credit-card" style="background:${colors[c.card_type]||colors.debit}">
+      <div>
+        <div class="card-chip"></div>
+        <div class="card-type-badge">${c.card_type}</div>
+      </div>
+      <div>
+        <div class="card-num">${c.card_number}</div>
+        <div class="card-bottom">
+          <div>
+            <div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;">Card Holder</div>
+            <div class="card-holder-name">${c.card_holder}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="card-expiry-label">Expires</div>
+            <div class="card-expiry">${String(c.expiry_month).padStart(2,'0')}/${c.expiry_year}</div>
+          </div>
+        </div>
+        <div class="card-status-badge"><span class="badge ${c.status==='active'?'badge-green':c.status==='blocked'?'badge-red':'badge-orange'}">${c.status}</span>
+          ${c.status==='active'?`<button class="btn btn-red" style="padding:0.2rem 0.5rem;font-size:0.65rem;margin-left:0.4rem" onclick="updateCardStatus('${c.id}','blocked')">Block</button>`:
+          `<button class="btn btn-green" style="padding:0.2rem 0.5rem;font-size:0.65rem;margin-left:0.4rem" onclick="updateCardStatus('${c.id}','active')">Activate</button>`}
+        </div>
+      </div>
+    </div>`).join('')+'<div style="display:flex;align-items:center;justify-content:center;border:2px dashed rgba(201,168,76,0.2);aspect-ratio:1.586/1;cursor:pointer;transition:all 0.3s" onclick="openNewCard()" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.5)\'" onmouseout="this.style.borderColor=\'rgba(201,168,76,0.2)\'"><div style="text-align:center;color:var(--muted)"><div style="font-size:2rem">+</div><div style="font-size:0.8rem">Issue New Card</div></div></div>';
+}
+
+function openNewCard(){populateAccountSelects();openModal('newCardModal');}
+
+async function createCard(){
+  const acc=document.getElementById('cardAccount').value;
+  const type=document.getElementById('cardType').value;
+  if(!acc)return showToast('Please link an account','error');
+  const r=await apiFetch('/cards','POST',{account_id:acc,card_type:type});
+  if(r&&!r.error){showToast(`${type} card issued!`,'success');closeModal('newCardModal');loadCards();}
+  else showToast(r?.error||'Error creating card','error');
+}
+
+async function updateCardStatus(cardId,status){
+  const r=await apiFetch(`/cards/${cardId}/status`,'PUT',{status});
+  if(r&&!r.error){showToast(`Card ${status}!`,'success');loadCards();}
+  else showToast(r?.error||'Error','error');
+}
+
+// ── LOANS ─────────────────────────────────────────────────────────────
+async function loadLoans(){
+  const loans=await apiFetch('/loans')||[];
+  const active=loans.filter(l=>l.status==='active');
+  const pending=loans.filter(l=>l.status==='pending');
+  const paid=loans.filter(l=>l.status==='paid');
+  document.getElementById('loanSummary').innerHTML=`
+    <div class="flex flex-col gap-1">
+      ${[{l:'Active',v:active.length,c:'badge-green'},{l:'Pending',v:pending.length,c:'badge-orange'},{l:'Paid Off',v:paid.length,c:'badge-blue'}].map(s=>`
+        <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border2)">
+          <span class="text-muted text-sm">${s.l} Loans</span>
+          <span class="badge ${s.c}">${s.v}</span>
+        </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:0.5rem 0;">
+        <span class="text-muted text-sm">Total Outstanding</span>
+        <span class="bold text-red">$${active.reduce((s,l)=>s+l.remaining_balance,0).toFixed(2)}</span>
+      </div>
+    </div>`;
+
+  document.getElementById('loansGrid').innerHTML=loans.length?loans.map(l=>{
+    const pct=Math.round(((l.amount-l.remaining_balance)/l.amount)*100);
+    return`<div class="loan-card">
+      <div class="loan-header">
+        <div>
+          <div class="loan-type">${l.loan_type} Loan</div>
+          <div class="text-muted text-xs mt-1">$${l.amount.toLocaleString()} @ ${l.interest_rate}% p.a. · ${l.duration_months} months</div>
+        </div>
+        <div style="text-align:right">
+          <span class="badge ${l.status==='active'?'badge-green':l.status==='pending'?'badge-orange':l.status==='paid'?'badge-blue':'badge-red'}">${l.status}</span>
+        </div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.8rem;">
+        <span class="text-muted">Paid: <span class="text-green">$${l.paid_amount.toFixed(2)}</span></span>
+        <span class="text-muted">Remaining: <span class="text-red">$${l.remaining_balance.toFixed(2)}</span></span>
+        <span class="text-muted">Monthly: <span class="text-gold">$${l.monthly_payment}</span></span>
+      </div>
+      ${l.status==='active'?`<button class="btn btn-gold" style="margin-top:0.8rem;width:100%;" onclick="openLoanPayment('${l.id}',${l.remaining_balance},${l.monthly_payment})">Make Payment</button>`:''}
+    </div>`;
+  }).join(''):'<div class="text-muted text-sm" style="padding:1.5rem;text-align:center">No loans yet. Apply for one above.</div>';
+}
+
+function calcLoanEMI(){
+  const type=document.getElementById('loanType').value;
+  const amt=parseFloat(document.getElementById('loanAmount').value);
+  const dur=parseInt(document.getElementById('loanDuration').value);
+  const rates={personal:12.5,home:7.5,auto:9.0,education:6.5,business:11.0};
+  if(!amt||!dur)return showToast('Enter amount and duration','error');
+  const rate=rates[type];const r=rate/100/12;
+  const emi=(amt*r*Math.pow(1+r,dur))/(Math.pow(1+r,dur)-1);
+  const total=emi*dur;const interest=total-amt;
+  const res=document.getElementById('loanCalcResult');
+  res.style.display='block';
+  res.innerHTML=`<div class="flex flex-col gap-1 text-sm">
+    <div style="display:flex;justify-content:space-between"><span class="text-muted">Monthly EMI</span><span class="text-gold bold">$${emi.toFixed(2)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span class="text-muted">Total Amount</span><span>$${total.toFixed(2)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span class="text-muted">Total Interest</span><span class="text-red">$${interest.toFixed(2)}</span></div>
+  </div>`;
+}
+
+async function applyLoan(){
+  const type=document.getElementById('loanType').value;
+  const amt=parseFloat(document.getElementById('loanAmount').value);
+  const dur=parseInt(document.getElementById('loanDuration').value);
+  if(!amt||!dur)return showToast('Enter amount and duration','error');
+  const r=await apiFetch('/loans','POST',{loan_type:type,amount:amt,duration_months:dur});
+  if(r&&!r.error){showToast(`Loan application submitted! EMI: $${r.monthlyPayment}/month`,'success');loadLoans();}
+  else showToast(r?.error||'Error','error');
+}
+
+function openLoanPayment(loanId,remaining,monthly){
+  document.getElementById('payLoanId').value=loanId;
+  document.getElementById('payLoanAmount').value=monthly;
+  document.getElementById('loanPayInfo').textContent=`Remaining balance: $${remaining.toFixed(2)} · Suggested payment: $${monthly}`;
+  populateAccountSelects();
+  openModal('loanPayModal');
+}
+
+async function submitLoanPayment(){
+  const loanId=document.getElementById('payLoanId').value;
+  const accId=document.getElementById('payFromAccount').value;
+  const amt=parseFloat(document.getElementById('payLoanAmount').value);
+  if(!accId||!amt)return showToast('Fill all fields','error');
+  const r=await apiFetch(`/loans/${loanId}/pay`,'POST',{account_id:accId,amount:amt});
+  if(r&&!r.error){showToast(r.message||'Payment successful!','success');closeModal('loanPayModal');accounts=await apiFetch('/accounts')||[];loadLoans();}
+  else showToast(r?.error||'Error','error');
+}
+
+// ── BENEFICIARIES ──────────────────────────────────────────────────────
+async function loadBeneficiaries(){loadBeneficiariesList('benList');}
+async function loadBeneficiariesList(containerId){
+  const bens=await apiFetch('/beneficiaries')||[];
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  if(containerId==='transferBeneficiaries'){
+    el.innerHTML=bens.length?bens.map(b=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid var(--border2);cursor:pointer" onclick="document.getElementById('transferTo').value='${b.account_number}'">
+        <div><div class="text-sm">${b.name}</div><div class="text-xs text-muted">${b.account_number}</div></div>
+        <div class="text-xs text-gold">Use →</div>
+      </div>`).join(''):'<div class="text-muted text-sm" style="padding:0.5rem">No beneficiaries yet</div>';
+  } else {
+    el.innerHTML=bens.length?bens.map(b=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid var(--border2);">
+        <div><div class="text-sm">${b.name}</div><div class="text-xs text-muted">${b.account_number} · ${b.bank_name}</div></div>
+        <button class="btn btn-red" style="padding:0.2rem 0.6rem;font-size:0.72rem" onclick="deleteBeneficiary('${b.id}')">Remove</button>
+      </div>`).join(''):'<div class="text-muted text-sm" style="padding:0.5rem">No saved beneficiaries</div>';
+  }
+}
+
+async function addBeneficiary(){
+  const name=document.getElementById('benName').value.trim();
+  const acc=document.getElementById('benAccount').value.trim();
+  const bank=document.getElementById('benBank').value.trim();
+  if(!name||!acc)return showToast('Name and account number required','error');
+  const r=await apiFetch('/beneficiaries','POST',{name,account_number:acc,bank_name:bank});
+  if(r&&!r.error){showToast('Beneficiary added!','success');document.getElementById('benName').value='';document.getElementById('benAccount').value='';loadBeneficiaries();}
+  else showToast(r?.error||'Error','error');
+}
+
+async function deleteBeneficiary(id){
+  const r=await apiFetch(`/beneficiaries/${id}`,'DELETE');
+  if(r&&!r.error){showToast('Beneficiary removed','success');loadBeneficiaries();}
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────────────────────
+async function loadNotifications(){
+  const notifs=await apiFetch('/notifications')||[];
+  const typeColors={success:'var(--green)',error:'var(--red)',warning:'var(--orange)',info:'var(--blue)'};
+  document.getElementById('notifList').innerHTML=notifs.length?notifs.map(n=>`
+    <div class="notif-item ${!n.read?'unread':''}" onclick="readNotif('${n.id}',this)">
+      <div class="notif-dot-type" style="background:${typeColors[n.type]||'var(--gold)'}"></div>
+      <div class="notif-content">
+        <div class="notif-title ${!n.read?'bold':''}">${n.title}</div>
+        <div class="notif-msg">${n.message}</div>
+        <div class="notif-time">${new Date(n.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+    </div>`).join(''):'<div class="text-muted text-sm" style="padding:2rem;text-align:center">No notifications</div>';
+}
+
+async function readNotif(id,el){
+  await apiFetch(`/notifications/${id}/read`,'PUT');
+  el.classList.remove('unread');
+  el.querySelector('.notif-title').classList.remove('bold');
+  updateNotifCount();
+}
+
+async function markAllRead(){
+  await apiFetch('/notifications/read-all','PUT');
+  loadNotifications();
+  updateNotifCount(0);
+}
+
+async function pollNotifications(){
+  const r=await apiFetch('/notifications/unread-count');
+  if(r)updateNotifCount(r.count);
+}
+
+function updateNotifCount(count){
+  const badge=document.getElementById('notifBadge');
+  const dot=document.getElementById('notifDot');
+  if(count>0){badge.textContent=count;badge.style.display='inline';dot.style.display='block';}
+  else{badge.style.display='none';dot.style.display='none';}
+}
+
+// ── PROFILE ───────────────────────────────────────────────────────────
+async function loadProfile(){
+  const user=await apiFetch('/users/me');
+  if(!user)return;
+  document.getElementById('profileName').value=user.name||'';
+  document.getElementById('profileEmail').value=user.email||'';
+  document.getElementById('profilePhone').value=user.phone||'';
+  document.getElementById('profileAddress').value=user.address||'';
+  document.getElementById('profileInfo').innerHTML=`
+    <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border2);font-size:0.82rem"><span class="text-muted">Member Since</span><span>${new Date(user.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border2);font-size:0.82rem"><span class="text-muted">Account Type</span><span style="text-transform:capitalize;color:var(--gold)">${user.role}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-size:0.82rem"><span class="text-muted">Status</span><span class="badge badge-green">${user.status}</span></div>`;
+}
+
+async function saveProfile(){
+  const r=await apiFetch('/users/profile','PUT',{name:document.getElementById('profileName').value,phone:document.getElementById('profilePhone').value,address:document.getElementById('profileAddress').value});
+  if(r&&!r.error){showToast('Profile updated!','success');document.getElementById('sidebarName').textContent=document.getElementById('profileName').value;}
+  else showToast(r?.error||'Error','error');
+}
+
+async function changePassword(){
+  const cur=document.getElementById('currentPwd').value;
+  const newP=document.getElementById('newPwd').value;
+  const conf=document.getElementById('confirmPwd').value;
+  if(!cur||!newP||!conf)return showToast('All fields required','error');
+  if(newP!==conf)return showToast('New passwords do not match','error');
+  if(newP.length<6)return showToast('Password must be at least 6 characters','error');
+  const r=await apiFetch('/users/password','PUT',{currentPassword:cur,newPassword:newP});
+  if(r&&!r.error){showToast('Password changed!','success');document.getElementById('currentPwd').value='';document.getElementById('newPwd').value='';document.getElementById('confirmPwd').value='';}
+  else showToast(r?.error||'Error','error');
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────
+async function loadAdmin(){
+  if(currentUser.role!=='admin')return;
+  const stats=await apiFetch('/admin/stats')||{};
+  const fields=[
+    {l:'Total Users',v:stats.totalUsers||0,icon:'👥',c:''},
+    {l:'Total Accounts',v:stats.totalAccounts||0,icon:'🏦',c:''},
+    {l:'Bank Balance',v:'$'+(stats.totalBalance||0).toLocaleString('en',{maximumFractionDigits:0}),icon:'💰',c:'up'},
+    {l:'Pending Loans',v:stats.pendingLoans||0,icon:'📋',c:stats.pendingLoans>0?'down':''},
+    {l:'Total Transactions',v:stats.totalTransactions||0,icon:'↔️',c:''},
+    {l:'Active Loans',v:stats.activeLoans||0,icon:'📑',c:''},
+    {l:'Total Cards',v:stats.totalCards||0,icon:'💳',c:''},
+    {l:"Today's Tx",v:stats.todayTransactions||0,icon:'📊',c:'up'}
+  ];
+  document.getElementById('adminStatsGrid').innerHTML=fields.map(s=>`
+    <div class="stat-card"><div class="stat-label">${s.l}</div><div class="stat-value serif">${s.v}</div><div class="stat-icon">${s.icon}</div></div>`).join('');
+
+  const users=await apiFetch('/admin/users')||[];
+  document.getElementById('adminUsersBody').innerHTML=users.map(u=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:0.5rem"><div class="user-avatar" style="width:26px;height:26px;font-size:0.7rem;background:${u.avatar_color||'#c9a84c'}">${u.name[0]}</div>${u.name}</div></td>
+      <td class="text-muted">${u.email}</td>
+      <td><span class="badge ${u.status==='active'?'badge-green':'badge-red'}">${u.status}</span></td>
+      <td>${u.role!=='admin'?`<button class="btn ${u.status==='active'?'btn-red':'btn-green'}" style="padding:0.2rem 0.6rem;font-size:0.7rem" onclick="toggleUserStatus('${u.id}','${u.status==='active'?'suspended':'active'}')">${u.status==='active'?'Suspend':'Activate'}</button>`:'-'}</td>
+    </tr>`).join('');
+
+  const loans=await apiFetch('/admin/loans')||[];
+  const pending=loans.filter(l=>l.status==='pending');
+  document.getElementById('adminLoansList').innerHTML=pending.length?pending.map(l=>`
+    <div style="padding:0.8rem 0;border-bottom:1px solid var(--border2)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
+        <span class="text-sm bold text-capitalize">${l.user_name}</span>
+        <span class="text-gold text-sm bold">$${l.amount.toLocaleString()}</span>
+      </div>
+      <div class="text-xs text-muted mb-1">${l.loan_type} · ${l.duration_months}mo · ${l.interest_rate}% p.a.</div>
+      <div style="display:flex;gap:0.4rem">
+        <button class="btn btn-green" style="padding:0.25rem 0.7rem;font-size:0.7rem;flex:1" onclick="adminLoanAction('${l.id}','approve')">✓ Approve</button>
+        <button class="btn btn-red" style="padding:0.25rem 0.7rem;font-size:0.7rem;flex:1" onclick="adminLoanAction('${l.id}','reject')">✕ Reject</button>
+      </div>
+    </div>`).join(''):'<div class="text-muted text-sm" style="padding:1rem;text-align:center">No pending applications</div>';
+
+  const txs=await apiFetch('/admin/transactions')||[];
+  document.getElementById('adminTxBody').innerHTML=txs.slice(0,30).map(t=>`
+    <tr>
+      <td>${t.user_name}</td>
+      <td><span class="badge ${['deposit','loan_disbursement'].includes(t.type)?'badge-green':'badge-red'}">${t.type.replace('_',' ')}</span></td>
+      <td class="text-muted">${t.description||'-'}</td>
+      <td class="${['deposit','loan_disbursement'].includes(t.type)?'text-green':'text-red'} bold">$${t.amount.toLocaleString('en',{minimumFractionDigits:2})}</td>
+      <td class="text-muted">${new Date(t.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
+    </tr>`).join('');
+}
+
+async function toggleUserStatus(userId,status){
+  const r=await apiFetch(`/admin/users/${userId}/status`,'PUT',{status});
+  if(r&&!r.error){showToast(`User ${status}`,'success');loadAdmin();}
+  else showToast(r?.error||'Error','error');
+}
+
+async function adminLoanAction(loanId,action){
+  const r=await apiFetch(`/admin/loans/${loanId}`,'PUT',{action});
+  if(r&&!r.error){showToast(`Loan ${action}d!`,'success');loadAdmin();}
+  else showToast(r?.error||'Error','error');
+}
+
+// ── START ──────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

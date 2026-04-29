@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NexaBank — Premium Banking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dark: #9a7a2e;
+    --black: #0a0a0f;
+    --dark: #111118;
+    --dark2: #1a1a24;
+    --dark3: #22222f;
+    --border: rgba(201,168,76,0.2);
+    --text: #e8e4d9;
+    --muted: #7a7a8a;
+    --red: #e05555;
+    --green: #4caf7d;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; background:var(--black); color:var(--text); font-family:'DM Sans',sans-serif; overflow:hidden; }
+
+  .bg {
+    position:fixed; inset:0; z-index:0;
+    background: radial-gradient(ellipse 80% 80% at 20% 50%, rgba(201,168,76,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 60% at 80% 20%, rgba(201,168,76,0.05) 0%, transparent 50%),
+                var(--black);
+  }
+  .bg::before {
+    content:'';position:absolute;inset:0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,168,76,0.03) 60px, rgba(201,168,76,0.03) 61px),
+                      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,168,76,0.03) 60px, rgba(201,168,76,0.03) 61px);
+  }
+
+  .container { position:relative; z-index:1; display:flex; height:100vh; }
+
+  /* LEFT PANEL */
+  .left-panel {
+    width:55%; display:flex; flex-direction:column; justify-content:center; align-items:flex-start;
+    padding:4rem 5rem; position:relative; overflow:hidden;
+  }
+  .left-panel::after {
+    content:''; position:absolute; right:0; top:10%; bottom:10%;
+    width:1px; background:linear-gradient(to bottom, transparent, var(--gold), transparent);
+  }
+  .brand { margin-bottom:3.5rem; }
+  .brand-logo {
+    display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;
+  }
+  .brand-icon {
+    width:52px; height:52px; border:1.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+    position:relative;
+  }
+  .brand-icon::before {
+    content:''; position:absolute; inset:-4px;
+    border:1px solid rgba(201,168,76,0.3);
+  }
+  .brand-name { font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:600; letter-spacing:0.1em; color:var(--gold); }
+  .brand-tagline { font-size:0.75rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--muted); }
+  .hero-title {
+    font-family:'Cormorant Garamond',serif; font-size:3.8rem; line-height:1.1;
+    font-weight:300; margin-bottom:1.5rem; color:var(--text);
+  }
+  .hero-title span { color:var(--gold); font-weight:600; }
+  .hero-sub { font-size:0.95rem; color:var(--muted); line-height:1.8; max-width:420px; margin-bottom:3rem; }
+  .features { display:flex; flex-direction:column; gap:1rem; }
+  .feature {
+    display:flex; align-items:center; gap:1rem; padding:0.8rem 1.2rem;
+    border:1px solid rgba(201,168,76,0.1); background:rgba(201,168,76,0.03);
+    transition:all 0.3s;
+  }
+  .feature:hover { border-color:rgba(201,168,76,0.3); background:rgba(201,168,76,0.06); }
+  .feature-icon { font-size:1.3rem; width:2rem; text-align:center; }
+  .feature-text { font-size:0.85rem; color:var(--muted); }
+  .feature-text strong { color:var(--text); display:block; font-size:0.9rem; margin-bottom:0.1rem; }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    width:45%; display:flex; align-items:center; justify-content:center; padding:2rem 3rem;
+    overflow-y: auto;
+  }
+  .auth-box { width:100%; max-width:400px; }
+  .tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:2.5rem; }
+  .tab {
+    flex:1; padding:0.8rem; text-align:center; cursor:pointer; font-size:0.85rem;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);
+    transition:all 0.3s; border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+
+  .form { display:none; }
+  .form.active { display:block; animation:fadeUp 0.4s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  .form-title { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:600; margin-bottom:0.4rem; }
+  .form-sub { font-size:0.82rem; color:var(--muted); margin-bottom:2rem; }
+
+  .input-group { margin-bottom:1.2rem; }
+  .input-group label { display:block; font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.5rem; }
+  .input-group input {
+    width:100%; padding:0.85rem 1rem; background:var(--dark2);
+    border:1px solid var(--border); color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.9rem;
+    outline:none; transition:all 0.3s;
+  }
+  .input-group input:focus { border-color:var(--gold); background:var(--dark3); }
+  .input-group input::placeholder { color:var(--muted); }
+
+  .btn-primary {
+    width:100%; padding:0.9rem; background:var(--gold); color:var(--black);
+    border:none; font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:600;
+    letter-spacing:0.15em; text-transform:uppercase; cursor:pointer; transition:all 0.3s; margin-top:0.5rem;
+  }
+  .btn-primary:hover { background:var(--gold-light); }
+  .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+
+  .divider { display:flex; align-items:center; gap:1rem; margin:1.5rem 0; }
+  .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+  .divider span { font-size:0.75rem; color:var(--muted); }
+
+  .demo-box { background:rgba(201,168,76,0.05); border:1px solid var(--border); padding:1rem 1.2rem; }
+  .demo-box h4 { font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); margin-bottom:0.6rem; }
+  .demo-cred { display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.3rem; color:var(--muted); }
+  .demo-cred span:last-child { color:var(--text); }
+  .demo-btn { background:none; border:1px solid var(--border); color:var(--muted); padding:0.4rem 0.8rem; font-size:0.75rem; cursor:pointer; width:100%; margin-top:0.6rem; transition:all 0.3s; font-family:'DM Sans',sans-serif; }
+  .demo-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+  .error-msg { background:rgba(224,85,85,0.1); border:1px solid rgba(224,85,85,0.3); color:var(--red); font-size:0.82rem; padding:0.7rem 1rem; margin-bottom:1rem; display:none; }
+  .success-msg { background:rgba(76,175,125,0.1); border:1px solid rgba(76,175,125,0.3); color:var(--green); font-size:0.82rem; padding:0.7rem 1rem; margin-bottom:1rem; display:none; }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="container">
+  <div class="left-panel">
+    <div class="brand">
+      <div class="brand-logo">
+        <div class="brand-icon">⬡</div>
+        <div>
+          <div class="brand-name">NEXABANK</div>
+          <div class="brand-tagline">Premium Banking Experience</div>
+        </div>
+      </div>
+      <h1 class="hero-title">Banking<br/>Reimagined<br/><span>For You.</span></h1>
+      <p class="hero-sub">Experience next-generation financial management with enterprise-grade security, real-time transfers, and intelligent insights — all in one platform.</p>
+    </div>
+    <div class="features">
+      <div class="feature"><div class="feature-icon">🔐</div><div class="feature-text"><strong>Military-Grade Security</strong>JWT authentication with encrypted data</div></div>
+      <div class="feature"><div class="feature-icon">⚡</div><div class="feature-text"><strong>Instant Transfers</strong>Real-time fund transfers across accounts</div></div>
+      <div class="feature"><div class="feature-icon">📊</div><div class="feature-text"><strong>Smart Analytics</strong>Track spending with detailed insights</div></div>
+      <div class="feature"><div class="feature-icon">💳</div><div class="feature-text"><strong>Virtual Cards</strong>Issue and manage multiple card types</div></div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="auth-box">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('login')">Sign In</div>
+        <div class="tab" onclick="switchTab('register')">Register</div>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="form active" id="loginForm">
+        <div class="form-title">Welcome Back</div>
+        <div class="form-sub">Sign in to your NexaBank account</div>
+        <div class="error-msg" id="loginError"></div>
+        <div class="success-msg" id="loginSuccess"></div>
+        <div class="input-group"><label>Email Address</label><input type="email" id="loginEmail" placeholder="you@example.com"/></div>
+        <div class="input-group"><label>Password</label><input type="password" id="loginPassword" placeholder="Enter your password"/></div>
+        <button class="btn-primary" onclick="handleLogin()" id="loginBtn">Sign In</button>
+        <div class="divider"><span>or use demo account</span></div>
+        <div class="demo-box">
+          <h4>Demo Credentials</h4>
+          <div class="demo-cred"><span>Admin:</span><span>admin@nexabank.com / admin123</span></div>
+          <button class="demo-btn" onclick="fillDemo('admin@nexabank.com','admin123')">Use Admin Account →</button>
+        </div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div class="form" id="registerForm">
+        <div class="form-title">Create Account</div>
+        <div class="form-sub">Open your NexaBank account today</div>
+        <div class="error-msg" id="registerError"></div>
+        <div class="success-msg" id="registerSuccess"></div>
+        <div class="input-group"><label>Full Name</label><input type="text" id="regName" placeholder="John Doe"/></div>
+        <div class="input-group"><label>Email Address</label><input type="email" id="regEmail" placeholder="you@example.com"/></div>
+        <div class="input-group"><label>Phone Number</label><input type="tel" id="regPhone" placeholder="+1-234-567-8900"/></div>
+        <div class="input-group"><label>Password</label><input type="password" id="regPassword" placeholder="Min. 6 characters"/></div>
+        <button class="btn-primary" onclick="handleRegister()" id="registerBtn">Create Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:5000/api';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
+  document.getElementById('loginForm').classList.toggle('active', tab==='login');
+  document.getElementById('registerForm').classList.toggle('active', tab==='register');
+}
+
+function fillDemo(email, pass) {
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('loginPassword').value = pass;
+}
+
+function showMsg(id, msg, type='error') {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(()=>el.style.display='none', 5000);
+}
+
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if (!email || !pass) return showMsg('loginError','Please enter email and password.');
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Signing In...';
+  try {
+    const r = await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d = await r.json();
+    if (!r.ok) return showMsg('loginError', d.error || 'Login failed.');
+    localStorage.setItem('nexabank_token', d.token);
+    localStorage.setItem('nexabank_user', JSON.stringify(d.user));
+    showMsg('loginSuccess','Login successful! Redirecting...','success');
+    document.getElementById('loginSuccess').style.display='block';
+    setTimeout(()=>window.location.href='dashboard.html', 800);
+  } catch(e) {
+    showMsg('loginError','Cannot connect to server. Make sure the backend is running on port 5000.');
+  } finally { btn.disabled=false; btn.textContent='Sign In'; }
+}
+
+async function handleRegister() {
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const phone=document.getElementById('regPhone').value.trim();
+  const pass=document.getElementById('regPassword').value;
+  if (!name||!email||!pass) return showMsg('registerError','Please fill all required fields.');
+  const btn=document.getElementById('registerBtn');
+  btn.disabled=true; btn.textContent='Creating Account...';
+  try {
+    const r=await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password:pass,phone})});
+    const d=await r.json();
+    if (!r.ok) return showMsg('registerError', d.error||'Registration failed.');
+    localStorage.setItem('nexabank_token',d.token);
+    localStorage.setItem('nexabank_user',JSON.stringify(d.user));
+    showMsg('registerSuccess','Account created! Redirecting...','success');
+    document.getElementById('registerSuccess').style.display='block';
+    setTimeout(()=>window.location.href='dashboard.html',800);
+  } catch(e) {
+    showMsg('registerError','Cannot connect to server.');
+  } finally { btn.disabled=false; btn.textContent='Create Account'; }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter') {
+    if(document.getElementById('loginForm').classList.contains('active')) handleLogin();
+    else handleRegister();
+  }
+});
+
+// Auto-redirect if logged in
+if(localStorage.getItem('nexabank_token')) window.location.href='dashboard.html';
+</script>
+</body>
+</html>
